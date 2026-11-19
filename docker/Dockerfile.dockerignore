@@ -1,0 +1,21 @@
+# Not part of the Docker image (see docker/Dockerfile). Docker BuildKit reads this file because it sits next to
+# docker/Dockerfile (it is kept out of the web root, where a .dockerignore would be publicly readable).
+
+# Secrets: config.php is generated in the container from environment variables.
+config.php
+config-sample.php
+docker/.env
+docker/initdb
+
+# Runtime data of the live site (logs, sessions, cache, uploads, backups): the container uses its own volume.
+storage/*/*
+!storage/*/.htaccess
+!storage/*/index.html
+
+# Leftovers and tooling
+crcr_logo.png
+.git
+.idea
+.vscode
+*.log
+node_modules

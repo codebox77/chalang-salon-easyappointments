@@ -1,0 +1,16 @@
+# Secrets: generated per server (live: edited by hand, Docker: from environment variables).
+/config.php
+/docker/.env
+/docker/initdb/
+
+# Runtime data of the live site: logs (may hold personal data), sessions, cache, uploads, backups.
+/storage/*/*
+!/storage/*/.htaccess
+!/storage/*/index.html
+
+# Duplicates / local tooling
+/crcr_logo.png
+*.log
+.idea/
+.vscode/
+node_modules/

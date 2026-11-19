@@ -1,0 +1,54 @@
+# Deploy from a published image (no build on the server).
+#
+#   cp docker/.env.example docker/.env      # fill in BASE_URL, passwords and APP_IMAGE
+#   docker compose -f docker/docker-compose.deploy.yml --env-file docker/.env pull
+#   docker compose -f docker/docker-compose.deploy.yml --env-file docker/.env up -d
+#
+# Update to the newest image later: run the same "pull" and "up -d" again.
+# A private GHCR image needs a one-time login on the server:
+#   docker login ghcr.io -u <github-user>     (password: a GitHub token with the read:packages scope)
+
+services:
+  app:
+    image: ${APP_IMAGE:?set APP_IMAGE in docker/.env, e.g. ghcr.io/owner/repo:latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-8080}:80"
+    environment:
+      BASE_URL: ${BASE_URL:?set BASE_URL in docker/.env}
+      LANGUAGE: korean
+      DEBUG_MODE: "false"
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-easyappointments}
+      DB_USERNAME: ${DB_USERNAME:-easyappointments}
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in docker/.env}
+      KAKAO_JAVASCRIPT_KEY: ${KAKAO_JAVASCRIPT_KEY:-}
+      TZ: Asia/Seoul
+    volumes:
+      - app-storage:/var/www/html/storage
+
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-easyappointments}
+      MARIADB_USER: ${DB_USERNAME:-easyappointments}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in docker/.env}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in docker/.env}
+      TZ: Asia/Seoul
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  db-data:
+  app-storage:
