@@ -6,6 +6,8 @@
 
 ## 실행 (Docker, php:8.4-apache 이미지)
 
+**NAS(시놀로지·UGREEN) 설치는 [INSTALL_NAS.md](INSTALL_NAS.md) 참고.** 파일 하나로 설치: [`docker/docker-compose.nas.yml`](docker/docker-compose.nas.yml)
+
 ```bash
 docker compose -f docker/docker-compose.yml --env-file docker/.env up -d --build   # 소스로 빌드
 docker compose -f docker/docker-compose.deploy.yml --env-file docker/.env up -d     # 배포된 이미지 사용
@@ -93,6 +95,7 @@ docker compose -f docker/docker-compose.deploy.yml --env-file docker/.env up -d 
 
 ```
 docker/                                   Dockerfile, compose(빌드·배포), 환경 변수 → config.php 생성
+INSTALL_NAS.md                            NAS(시놀로지·UGREEN) 설치 안내
 .github/workflows/docker-publish.yml      GHCR + Docker Hub 이미지 자동 배포
 application/controllers/
   Change_requests.php                     변경 요청 승인 화면

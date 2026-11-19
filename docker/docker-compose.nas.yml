@@ -1,0 +1,50 @@
+# 찰랑찰랑 예약 사이트 – NAS용 (Docker Hub 이미지, 소스 파일 필요 없음)
+# 이 파일 하나만 NAS 폴더에 올리고 이름을 docker-compose.yml 로 바꿔서 사용하세요.
+# 아래 "바꾸세요" 표시된 값 4개를 먼저 바꿉니다. 자세한 방법: INSTALL_NAS.md
+services:
+  app:
+    image: codeboxdocker/chalang-salon-easyappointments:latest   # 버전 고정 예: ...:1.0.0
+    container_name: chalang-booking
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:80"                 # 왼쪽 8080 을 다른 번호로 바꿔도 됨
+    environment:
+      TZ: Asia/Seoul
+      # 손님이 접속할 주소 (끝에 / 없이). 바꾸세요. 예: https://salon.우리가게.synology.me
+      BASE_URL: "http://NAS주소:8080"
+      LANGUAGE: korean
+      DEBUG_MODE: "false"
+      DB_HOST: db
+      DB_NAME: easyappointments
+      DB_USERNAME: easyappointments
+      DB_PASSWORD: "바꾸세요-앱DB비밀번호"          # 바꾸세요 (아래 db 의 MARIADB_PASSWORD 와 같게)
+      # KAKAO_JAVASCRIPT_KEY: ""                    # 관리자 → 설정 → 연동 → 카카오 에서도 설정 가능
+    volumes:
+      # 로그·세션·업로드 파일 – NAS 백업 대상에 포함하세요
+      - ./storage:/var/www/html/storage
+
+  db:
+    image: mariadb:10.11
+    container_name: chalang-booking-db
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Seoul
+      MARIADB_DATABASE: easyappointments
+      MARIADB_USER: easyappointments
+      MARIADB_PASSWORD: "바꾸세요-앱DB비밀번호"      # 바꾸세요 (위 DB_PASSWORD 와 같게)
+      MARIADB_ROOT_PASSWORD: "바꾸세요-관리용DB비밀번호"   # 바꾸세요 (다른 값으로)
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      # 예약 데이터(DB) – NAS 백업 대상에 꼭 포함하세요
+      - ./db:/var/lib/mysql
+      # (선택) 기존 사이트 DB 덤프(.sql)를 넣어 두면 처음 시작할 때 한 번만 불러옴
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    # DB 포트는 밖으로 열지 않습니다 (앱 컨테이너만 접속).
